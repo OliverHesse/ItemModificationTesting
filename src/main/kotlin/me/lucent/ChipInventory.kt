@@ -10,4 +10,7 @@ class ChipInventory {
     fun getPages():Int{
         return  1;
     }
+
+
+
 }
