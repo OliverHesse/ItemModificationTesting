@@ -1,5 +1,6 @@
 package me.lucent.Enums
 
+import me.lucent.ChipExecutors
 
 
 //Slotted condition executor args Plugin,Player,ItemStack
@@ -12,5 +13,9 @@ enum class ChipEffectCondition {
     OnAttack,
     OnTargetKilled,
     OnMoved,
-    onDefence
+    onDefence;
+
+    fun fromString(enumString:String):ChipEffectCondition?{
+        return ChipEffectCondition.entries.find { it.toString() == enumString }
+    }
 }

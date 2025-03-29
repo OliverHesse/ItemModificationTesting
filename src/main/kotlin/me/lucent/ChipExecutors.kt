@@ -9,7 +9,7 @@ import kotlin.reflect.KFunction
 
 object ChipExecutors {
 
-    val executorNameToFunction = listOf(::onSlotIncreaseFrostDamage50).associateBy { it.name }
+    val executorNameToFunction = listOf(::onSlotIncreaseFrostDamage50,::onSlotDefault).associateBy { it.name }
 
 
 

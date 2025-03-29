@@ -15,6 +15,7 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataContainer
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.Plugin
+import javax.naming.Name
 
 object ModGUI{
     val invinString = """
@@ -35,29 +36,41 @@ object ModGUI{
             return null;
         }
         var slots:Int = container.get(NamespacedKey(plugin,"PassiveSlots"), PersistentDataType.INTEGER)!!;
+        val initialSlots = slots
         plugin.logger.info(invinString)
         plugin.logger.info(invinString.length.toString())
+        val itemChipContainer = container.get(NamespacedKey(plugin,"PassiveChips"), PersistentDataType.STRING)!!;
+        val itemChips = PassiveChip.decodeChips(itemChipContainer);
         for((index,char) in invinString.withIndex()){
             plugin.logger.info(index.toString())
             when (char){
-                '#'->inventory.setItem(index,ItemStack(Material.GRAY_STAINED_GLASS_PANE,1))
+                '#'->inventory.setItem(index,ItemStack(Material.BLACK_STAINED_GLASS_PANE,1))
                 'C'->{
+
                     if(slots != 0){
+                        plugin.logger.info("checking chip slot for index $index")
+                        plugin.logger.info((itemChips.size-slots).toString())
+                        if(initialSlots-slots < itemChips.size){
+                            plugin.logger.info("creating chip for index $index")
+                            inventory.setItem(index,PassiveChip.generateChipItemStack(plugin,itemChips[initialSlots-slots]))
+                        }
+
                         slots -=1;
                         //TODO add chip if available
+
                     }else{
-                        inventory.setItem(index,ItemStack(Material.GRAY_STAINED_GLASS_PANE,1))
+                        inventory.setItem(index,ItemStack(Material.BLACK_STAINED_GLASS_PANE,1))
                     }
                 }
                 'I'->inventory.setItem(index,itemToMod)
-                'B'->inventory.setItem(index,ItemStack(Material.GRAY_STAINED_GLASS_PANE,1))
-                'P'->inventory.setItem(index,ItemStack(Material.GRAY_STAINED_GLASS_PANE,1))
+                'B'->inventory.setItem(index,ItemStack(Material.BLACK_STAINED_GLASS_PANE,1))
+                'P'->inventory.setItem(index,ItemStack(Material.BLACK_STAINED_GLASS_PANE,1))
                 'F'->{
                     //TODO just....clean up shits messy
                     if(plugin.chipInventoryHolder.getInventory(player)!!.getPages() > 1){
                         inventory.setItem(index,ItemStack(Material.ARROW,1));
                     }else{
-                        inventory.setItem(index,ItemStack(Material.GRAY_STAINED_GLASS_PANE,1))
+                        inventory.setItem(index,ItemStack(Material.BLACK_STAINED_GLASS_PANE,1))
                     }
                 }
             }
