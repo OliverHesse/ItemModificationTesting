@@ -2,6 +2,8 @@ package me.lucent
 
 import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
+import org.bukkit.Material
+import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -10,22 +12,64 @@ import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryDragEvent
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
+import org.bukkit.persistence.PersistentDataContainer
+import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.Plugin
 
 object ModGUI{
+    val invinString = """
+            ####CCCCC
+            ####CCCCC
+            #I#######
+            ####EEEEE
+            ####EEEEE
+            ######BPF
+        """.trimIndent().replace("\n","")
+
+    fun build(itemToMod:ItemStack,player: Player,plugin:ItemModificationTesting):Inventory?{
 
 
-    fun build(itemToMod:ItemStack,player: Player,plugin:Plugin):Inventory{
-        val inventory:Inventory = plugin.server.createInventory(null,27, Component.text("Mod Item"));
-        inventory.setItem(0,itemToMod);
+        val inventory:Inventory = plugin.server.createInventory(null,54, Component.text("Mod Item"));
+        val container:PersistentDataContainer = itemToMod.itemMeta.persistentDataContainer;
+        if(!container.has(NamespacedKey(plugin,"PassiveSlots"), PersistentDataType.INTEGER)){
+            return null;
+        }
+        var slots:Int = container.get(NamespacedKey(plugin,"PassiveSlots"), PersistentDataType.INTEGER)!!;
+        plugin.logger.info(invinString)
+        plugin.logger.info(invinString.length.toString())
+        for((index,char) in invinString.withIndex()){
+            plugin.logger.info(index.toString())
+            when (char){
+                '#'->inventory.setItem(index,ItemStack(Material.GRAY_STAINED_GLASS_PANE,1))
+                'C'->{
+                    if(slots != 0){
+                        slots -=1;
+                        //TODO add chip if available
+                    }else{
+                        inventory.setItem(index,ItemStack(Material.GRAY_STAINED_GLASS_PANE,1))
+                    }
+                }
+                'I'->inventory.setItem(index,itemToMod)
+                'B'->inventory.setItem(index,ItemStack(Material.GRAY_STAINED_GLASS_PANE,1))
+                'P'->inventory.setItem(index,ItemStack(Material.GRAY_STAINED_GLASS_PANE,1))
+                'F'->{
+                    //TODO just....clean up shits messy
+                    if(plugin.chipInventoryHolder.getInventory(player)!!.getPages() > 1){
+                        inventory.setItem(index,ItemStack(Material.ARROW,1));
+                    }else{
+                        inventory.setItem(index,ItemStack(Material.GRAY_STAINED_GLASS_PANE,1))
+                    }
+                }
+            }
+        }
 
         //TODO add in proper formating and chips
         return inventory
 
     }
 
-    fun open(itemToMod: ItemStack,player:Player,plugin:Plugin){
-        val inventory:Inventory = build(itemToMod,player,plugin)
+    fun open(itemToMod: ItemStack,player:Player,plugin:ItemModificationTesting){
+        val inventory:Inventory = build(itemToMod,player,plugin)!!
         registerIndividualListener(inventory,player,itemToMod,plugin);
         player.openInventory(inventory);
     }
@@ -34,7 +78,7 @@ object ModGUI{
 
     }
 
-    fun registerIndividualListener(immutableInventory: Inventory,player:Player,itemToMod:ItemStack,plugin:Plugin){
+    fun registerIndividualListener(immutableInventory: Inventory,player:Player,itemToMod:ItemStack,plugin:ItemModificationTesting){
         Bukkit.getPluginManager().registerEvents(object : Listener{
 
 
