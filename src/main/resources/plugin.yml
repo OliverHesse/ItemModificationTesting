@@ -1,0 +1,7 @@
+name: ItemModificationTesting
+version: '0.1-Development'
+main: me.lucent.ItemModificationTesting
+api-version: '1.21'
+commands:
+  mod:
+    usage: "/mod"
