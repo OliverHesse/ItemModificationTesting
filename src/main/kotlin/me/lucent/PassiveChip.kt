@@ -13,7 +13,7 @@ import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.Plugin
 
 @Serializable
-data class PassiveChip(val chipName:String, val chipType:String, val chipEffectCondition: ChipEffectCondition, val chipEffectExecutor:String, val chipEffectDescr:String){
+data class PassiveChip(val chipName:String, val chipType:String, val chipEffectCondition: ChipEffectCondition, val chipEffectExecutor:String, val chipEffectDescr:String,var count:Int=1){
 
     companion object {
         fun generateChipFromItemStack(item:ItemStack):PassiveChip?{
@@ -33,15 +33,16 @@ data class PassiveChip(val chipName:String, val chipType:String, val chipEffectC
             return Json.decodeFromString<List<PassiveChip>>(jsonChipString);
         }
         fun generateChipItemStack(plugin:Plugin,chip:PassiveChip): ItemStack{
-            val item = ItemStack(Material.REDSTONE,1)
+            val item = ItemStack(Material.REDSTONE,chip.count)
             val lore = buildList<Component> {
-                add(Component.text(chip.chipName).color(TextColor.color(12,221,240)).decorate(TextDecoration.BOLD))
+
                 add(Component.text("type: " + chip.chipType).color(TextColor.color(97, 97, 97)))
                 add(Component.text("Effect: "))
                 add(Component.text(chip.chipEffectDescr))
             }
 
             item.editMeta {
+                it.displayName(Component.text(chip.chipName).color(TextColor.color(12,221,240)).decorate(TextDecoration.BOLD))
                 it.persistentDataContainer.set(NamespacedKey(plugin,"chipName"), PersistentDataType.STRING,chip.chipName)
                 it.persistentDataContainer.set(NamespacedKey(plugin,"chipType"), PersistentDataType.STRING,chip.chipType)
                 it.persistentDataContainer.set(NamespacedKey(plugin,"chipEffectCondition"), PersistentDataType.STRING,chip.chipEffectCondition.toString())

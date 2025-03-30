@@ -14,7 +14,7 @@ import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.java.JavaPlugin
 
 class ItemModificationTesting : JavaPlugin() {
-    val chipInventoryHolder:PlayerInventoryHolder = PlayerInventoryHolder();
+    val chipInventoryHolder:PlayerInventoryHolder = PlayerInventoryHolder(this);
 
 
     fun testingChipSerialization(){
@@ -30,16 +30,27 @@ class ItemModificationTesting : JavaPlugin() {
     fun giveTestItems(player: Player){
         logger.info("Building item")
         chipInventoryHolder.createInventory(player);
+
+
+
         val key: NamespacedKey = NamespacedKey(this,"PassiveSlots");
         val sword:ItemStack = ItemStack(Material.DIAMOND_SWORD,1)
         val chip1:PassiveChip = PassiveChip("Frost Damage Up","Passive",ChipEffectCondition.Slotted,"onSlotIncreaseFrostDamage50","Increases Frost damage by 50 points")
         val chip2:PassiveChip = PassiveChip("Default Slot Effect","Passive",ChipEffectCondition.Slotted,"onSlotDefault","a default effect")
+
+
+
         sword.editMeta {
             it.persistentDataContainer.set(key, PersistentDataType.INTEGER,7);
             it.persistentDataContainer.set(NamespacedKey(this,"PassiveChips"), PersistentDataType.STRING,PassiveChip.serializeChips(listOf(chip1,chip2)))
         }
 
         player.inventory.addItem(sword)
+        chip1.count = 350;
+        chip2.count = 370;
+        chipInventoryHolder.addChip(player,chip1);
+        chipInventoryHolder.addChip(player,chip2);
+
     }
 
 

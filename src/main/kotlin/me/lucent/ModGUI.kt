@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
+import org.bukkit.entity.Item
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -27,20 +28,32 @@ object ModGUI{
             ######BPF
         """.trimIndent().replace("\n","")
 
-    fun build(itemToMod:ItemStack,player: Player,plugin:ItemModificationTesting):Inventory?{
+    fun build(itemToMod:ItemStack,player: Player,plugin:ItemModificationTesting,pageNum:Int,inventory: Inventory=plugin.server.createInventory(null,54, Component.text("Mod Item"))):Inventory?{
+
+        plugin.logger.info("current page num: $pageNum")
 
 
-        val inventory:Inventory = plugin.server.createInventory(null,54, Component.text("Mod Item"));
         val container:PersistentDataContainer = itemToMod.itemMeta.persistentDataContainer;
         if(!container.has(NamespacedKey(plugin,"PassiveSlots"), PersistentDataType.INTEGER)){
             return null;
         }
+
         var slots:Int = container.get(NamespacedKey(plugin,"PassiveSlots"), PersistentDataType.INTEGER)!!;
         val initialSlots = slots
+
+
         plugin.logger.info(invinString)
-        plugin.logger.info(invinString.length.toString())
+
         val itemChipContainer = container.get(NamespacedKey(plugin,"PassiveChips"), PersistentDataType.STRING)!!;
         val itemChips = PassiveChip.decodeChips(itemChipContainer);
+
+        val inventoryChips = plugin.chipInventoryHolder.getInventory(player)!!.getChips()
+        var currIndex = 0;
+        var currentConsumed = inventoryChips[0].count;
+
+        var offset = (pageNum-1)*10
+
+        val pagesLeft = plugin.chipInventoryHolder.getInventory(player)!!.getPages()-pageNum;
         for((index,char) in invinString.withIndex()){
             plugin.logger.info(index.toString())
             when (char){
@@ -56,23 +69,57 @@ object ModGUI{
                         }
 
                         slots -=1;
-                        //TODO add chip if available
+
 
                     }else{
                         inventory.setItem(index,ItemStack(Material.BLACK_STAINED_GLASS_PANE,1))
                     }
                 }
                 'I'->inventory.setItem(index,itemToMod)
-                'B'->inventory.setItem(index,ItemStack(Material.BLACK_STAINED_GLASS_PANE,1))
-                'P'->inventory.setItem(index,ItemStack(Material.BLACK_STAINED_GLASS_PANE,1))
+                'B'->{
+                    if(pageNum >1) inventory.setItem(index,ItemStack(Material.ARROW,1))
+                    else inventory.setItem(index,ItemStack(Material.BLACK_STAINED_GLASS_PANE,1))
+
+                }
+                'P'->inventory.setItem(index,ItemStack(Material.CYAN_STAINED_GLASS_PANE,pageNum))
                 'F'->{
                     //TODO just....clean up shits messy
-                    if(plugin.chipInventoryHolder.getInventory(player)!!.getPages() > 1){
-                        inventory.setItem(index,ItemStack(Material.ARROW,1));
-                    }else{
-                        inventory.setItem(index,ItemStack(Material.BLACK_STAINED_GLASS_PANE,1))
-                    }
+
+                    if(pagesLeft > 0) inventory.setItem(index,ItemStack(Material.ARROW,1))
+                    else inventory.setItem(index,ItemStack(Material.BLACK_STAINED_GLASS_PANE,1))
+
                 }
+                'E'-> {
+                    //TODO Try and tidy this up
+                    while(offset > 0){
+                        if (currentConsumed > 64){
+                            currentConsumed -= 64
+                            offset -= 1;
+                        }else{
+                            currIndex +=1
+                            offset -=1
+                            currentConsumed = if (currIndex < inventoryChips.size) inventoryChips[currIndex].count else 0
+                        }
+                    }
+                    if (currIndex >= inventoryChips.size) {
+                        inventory.setItem(index,null);
+                        continue
+                    };
+
+                    val chip = inventoryChips[currIndex].copy()
+                    if (currentConsumed> 64) {
+                        chip.count = 64;
+                        currentConsumed -= 64;
+                    } else {
+                        currIndex += 1
+                        chip.count = currentConsumed
+                        currentConsumed = if (currIndex < inventoryChips.size) inventoryChips[currIndex].count else 0
+                    }
+                    inventory.setItem(index,PassiveChip.generateChipItemStack(plugin,chip))
+
+
+                }
+
             }
         }
 
@@ -82,7 +129,7 @@ object ModGUI{
     }
 
     fun open(itemToMod: ItemStack,player:Player,plugin:ItemModificationTesting){
-        val inventory:Inventory = build(itemToMod,player,plugin)!!
+        val inventory:Inventory = build(itemToMod,player,plugin,1)!!
         registerIndividualListener(inventory,player,itemToMod,plugin);
         player.openInventory(inventory);
     }
@@ -102,10 +149,31 @@ object ModGUI{
             @EventHandler
             fun onInventoryClick(e:InventoryClickEvent){
                 if (e.clickedInventory != immutableInventory) return;
+                e.isCancelled = true;
                 plugin.logger.info("modding item from player ${Eventplayer.name}");
+
+                //TODO page swapping
+                if(e.slot == invinString.indexOf('F') && e.currentItem == ItemStack(Material.ARROW,1)){
+                    //Next page was clicked
+                    if(build(itemToMod,player,plugin, e.clickedInventory!!.getItem(invinString.indexOf('P'))!!.amount+1,immutableInventory) != null){
+                        player.updateInventory()
+                    }else{
+                        player.closeInventory()
+                    }
+
+                }
+                if(e.slot == invinString.indexOf('B') && e.currentItem == ItemStack(Material.ARROW,1)){
+                    //Back page was clicked
+                    if(build(itemToMod,player,plugin, e.clickedInventory!!.getItem(invinString.indexOf('P'))!!.amount-1,immutableInventory) != null){
+                        player.updateInventory()
+                    }else{
+                        player.closeInventory()
+                    }
+                }
+
                 //TODO add chips swapping
 
-                e.isCancelled = true;
+
             }
 
             @EventHandler
