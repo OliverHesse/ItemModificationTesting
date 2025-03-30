@@ -66,6 +66,8 @@ object ModGUI{
                         if(initialSlots-slots < itemChips.size){
                             plugin.logger.info("creating chip for index $index")
                             inventory.setItem(index,PassiveChip.generateChipItemStack(plugin,itemChips[initialSlots-slots]))
+                        }else{
+                            inventory.setItem(index,null)
                         }
 
                         slots -=1;
@@ -171,8 +173,77 @@ object ModGUI{
                     }
                 }
 
-                //TODO add chips swapping
+                if(e.currentItem!!.type == Material.REDSTONE && e.slot > 18){
+                    //Chip from inventory selected
+                    //Slot into weapon if slots are available
+                    val container = itemToMod.itemMeta.persistentDataContainer
+                    val maxItems = container.get(NamespacedKey(plugin,"PassiveSlots"), PersistentDataType.INTEGER)
+                    val currItems = container.get(NamespacedKey(plugin,"PassiveChips"), PersistentDataType.STRING)
+                    val numberOfChips = PassiveChip.decodeChips(currItems!!).size;
 
+
+                    if(numberOfChips == maxItems) return
+                    val chip = PassiveChip.generateChipFromItemStack(plugin,e.currentItem!!)!!;
+                    chip.count = 1;
+                    plugin.chipInventoryHolder.getInventory(player)!!.removeChip(chip.chipName,1);
+                    val newEncodedString = PassiveChip.decodeChips(currItems).toMutableList()
+                    newEncodedString.add(chip);
+                    itemToMod.editMeta {
+                        it.persistentDataContainer.set(
+                        NamespacedKey(plugin,"PassiveChips"),
+                        PersistentDataType.STRING,
+                        PassiveChip.serializeChips(newEncodedString)
+                    )}
+
+                    if(build(itemToMod,player,plugin, e.clickedInventory!!.getItem(invinString.indexOf('P'))!!.amount,immutableInventory) != null){
+                        player.updateInventory()
+                    }else{
+                        player.closeInventory()
+                    }
+
+                    //TODO call onSlot if it is registered for that event
+
+
+
+                }
+
+                //TODO remove chips from weapon
+                if(e.currentItem!!.type == Material.REDSTONE && e.slot < 18){
+                    //remove from weapon and add to inventory
+                    //Chip from inventory selected
+                    //Slot into weapon if slots are available
+                    val container = itemToMod.itemMeta.persistentDataContainer
+
+                    val currItems = container.get(NamespacedKey(plugin,"PassiveChips"), PersistentDataType.STRING)!!
+
+
+
+
+                    val chip = PassiveChip.generateChipFromItemStack(plugin,e.currentItem!!)!!;
+                    chip.count = 1;
+                    plugin.chipInventoryHolder.getInventory(player)!!.addChip(chip);
+                    val items = PassiveChip.decodeChips(currItems).toMutableList()
+                    var indexToRemove = 0
+                    for((index,item) in items.withIndex()){
+                        if(item.chipName == chip.chipName){indexToRemove = index;break}
+                    }
+                    items.removeAt(indexToRemove)
+                    itemToMod.editMeta {
+                        it.persistentDataContainer.set(
+                            NamespacedKey(plugin,"PassiveChips"),
+                            PersistentDataType.STRING,
+                            PassiveChip.serializeChips(items)
+                        )}
+
+                    if(build(itemToMod,player,plugin, e.clickedInventory!!.getItem(invinString.indexOf('P'))!!.amount,immutableInventory) != null){
+                        player.updateInventory()
+                    }else{
+                        player.closeInventory()
+                    }
+
+                    //TODO call onSlot unbind = true if it is registered for that event
+
+                }
 
             }
 

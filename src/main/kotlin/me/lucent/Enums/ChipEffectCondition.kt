@@ -14,8 +14,9 @@ enum class ChipEffectCondition {
     OnTargetKilled,
     OnMoved,
     onDefence;
-
+    companion object{
     fun fromString(enumString:String):ChipEffectCondition?{
         return ChipEffectCondition.entries.find { it.toString() == enumString }
+    }
     }
 }

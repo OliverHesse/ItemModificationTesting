@@ -17,7 +17,7 @@ object ChipExecutors {
 
 
 
-    fun onSlotIncreaseFrostDamage50(plugin:ItemModificationTesting,player: Player,item:ItemStack){
+    fun onSlotIncreaseFrostDamage50(plugin:ItemModificationTesting,player: Player,item:ItemStack,unbind:Boolean=false){
         //EXAMPLE
 
     }

@@ -16,8 +16,14 @@ import org.bukkit.plugin.Plugin
 data class PassiveChip(val chipName:String, val chipType:String, val chipEffectCondition: ChipEffectCondition, val chipEffectExecutor:String, val chipEffectDescr:String,var count:Int=1){
 
     companion object {
-        fun generateChipFromItemStack(item:ItemStack):PassiveChip?{
-            return null
+        fun generateChipFromItemStack(plugin:Plugin,item:ItemStack):PassiveChip?{
+
+            val name = item.persistentDataContainer.get(NamespacedKey(plugin,"chipName"), PersistentDataType.STRING)!!
+            val type = item.persistentDataContainer.get(NamespacedKey(plugin,"chipType"), PersistentDataType.STRING)!!
+            val effectCondition = ChipEffectCondition.fromString(item.persistentDataContainer.get(NamespacedKey(plugin,"chipEffectCondition"), PersistentDataType.STRING)!!)!!
+            val executorChip =  item.persistentDataContainer.get(NamespacedKey(plugin,"chipEffectExecutor"), PersistentDataType.STRING)!!
+            val descr = item.persistentDataContainer.get(NamespacedKey(plugin,"chipEffectDescr"), PersistentDataType.STRING)!!
+            return PassiveChip(name,type,effectCondition,executorChip,descr,item.amount)
         }
 
         fun serializeChip(chip:PassiveChip):String{
