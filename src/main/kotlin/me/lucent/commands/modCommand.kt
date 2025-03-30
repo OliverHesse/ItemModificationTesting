@@ -1,7 +1,7 @@
 package me.lucent.commands
 
+import me.lucent.GUI.PassiveChipModGUI
 import me.lucent.ItemModificationTesting
-import me.lucent.ModGUI
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -16,7 +16,7 @@ class modCommand(val plugin:ItemModificationTesting): CommandExecutor{
         val player :Player = p0;
         val playerItem: ItemStack = player.inventory.itemInMainHand;
 
-        ModGUI.open(playerItem,player,plugin);
+        PassiveChipModGUI.open(playerItem,player,plugin);
 
         return true;
     }
